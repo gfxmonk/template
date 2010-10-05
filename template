@@ -1,0 +1,50 @@
+#!/usr/bin/env python
+import os, sys
+
+def replace(template_location, output_location='-'):
+	with open_file(template_location) as template:
+		with open_file(output_location, 'w') as output:
+			print >> output, template.read() % os.environ,
+
+class open_file(object):
+	def __init__(self, path, mode='r', silent=False):
+		self.path = path
+		self.silent = silent
+		self.mode = mode
+		if path == '-':
+			self.__enter = self.__enter_stdin if mode == 'r' else self.__enter_stdout
+			self.__exit = lambda *a: None
+		else:
+			self.__enter = self.__enter_file
+			self.__exit = self.__exit_file
+
+	def __enter__(self): return self.__enter()
+	def __exit__(self, *a): return self.__exit()
+
+	def __enter_file(self):
+		self.__context = open(self.path, self.mode)
+		return self.__context.__enter__()
+
+	def __enter_stdin(self):
+		try:
+			if (not self.silent) and sys.stdin.isatty():
+				print >> sys.stderr, "Warning: reading input from stdin"
+		except AttributeError: pass
+		return sys.stdin
+
+	def __enter_stdout(self):
+		return sys.stdout
+	
+	def __exit_file(self):
+		self.__context.__exit__()
+
+
+if __name__ == '__main__':
+	if '--help' in sys.argv:
+		print >> sys.stderr, """Usage: template infile [outfile]\n       (use "-" for stdin / stdout)"""
+		sys.exit(1)
+	args = sys.argv[1:] or ('-',)
+	try:
+		replace(*args)
+	except KeyboardInterrupt: pass
+
