@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 import os, sys
+import jinja2
 
 def replace(template_location, output_location='-'):
 	with open_file(template_location) as template:
 		with open_file(output_location, 'w') as output:
-			print >> output, template.read() % os.environ,
+			template = jinja2.Template(template.read())
+			template.environment.undefined = jinja2.StrictUndefined
+			print >> output, template.render(os.environ),
 
 class open_file(object):
 	def __init__(self, path, mode='r', silent=False):

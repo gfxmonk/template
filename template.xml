@@ -1,28 +1,31 @@
 <?xml version="1.0" ?>
 <?xml-stylesheet type='text/xsl' href='interface.xsl'?>
 <interface uri="http://gfxmonk.net/dist/0install/template.xml" xmlns="http://zero-install.sourceforge.net/2004/injector/interface">
-  <name>template</name>
-  <summary>A dirt-simple python-style template program</summary>
-  <description>
-		Template syntax is the same as python's &quot;%&quot; operator, and available
-		template keys are everything in ENVIRONMENT.
+	<name>template</name>
+	<summary>A command-line jinja2 template script</summary>
+	<description>
+Template syntax is that of jinja2, and available
+template keys are everything in ENVIRONMENT.
 
-		example template file:
-		----------------------
-		Hello, %(USERNAME)s!
-		Home sweet %(HOME)s.
-		----------------------
+example template file:
+----------------------
+Hello, {{ USERNAME }}!
+Home sweet {{ HOME }}.
+----------------------
 
-		Any undefined keys (i.e unset environment variables) will raise
-		a KeyError and cause the script to fail. If you need to allow
-		for such things, it shouldn't be too hard.
+Any undefined keys (i.e unset environment variables) will raise
+an error and cause the script to fail.
 	</description>
 
-  <group main="template">
-    <implementation id="sha1new=84daa5eb7e278560b5def501e282205a517ca857" released="2010-10-05" version="0.1">
-    
-      <manifest-digest sha256="9de85a1da9aff22814d593776e353b8c33022b6436a9e16fa1110c3d90b9cf89"/>
-      <archive href="http://gfxmonk.net/dist/0install/template/template-0.1.tgz" size="711"/>
-    </implementation>
-  </group>
+	<group main="template">
+		<requires interface="http://gfxmonk.net/dist/0install/jinja2.xml">
+			<environment insert="" mode="prepend" name="PYTHONPATH"/>
+		</requires>
+		<implementation id="sha1new=23c31c4538971a1ba745e51ba01f6098abbb747d" released="2010-10-16" version="0.2">
+		
+    <manifest-digest sha256="ea53bf617f6ae3d60802e51c473000acd06a57110e2fecfea2652a771d9c86ef"/>
+    <archive href="http://gfxmonk.net/dist/0install/template/template-0.2.tgz" size="755"/>
+  </implementation>
+	</group>
+
 </interface>
