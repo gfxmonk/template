@@ -30,6 +30,11 @@ an error and cause the script to fail.
     <manifest-digest sha256="ea53bf617f6ae3d60802e51c473000acd06a57110e2fecfea2652a771d9c86ef"/>
     <archive href="http://gfxmonk.net/dist/0install/template/template-0.2.tgz" size="755"/>
   </implementation>
+
+		<implementation id="sha1new=61fbb8d51e3b912a1aca650a990d059a52e8f949" released="2010-10-18" version="0.3">
+    <manifest-digest sha256="e1f2a6a1e0397425f2b52e2552be4aac1598675d801e670f8c4b5bdff528e311"/>
+    <archive href="http://gfxmonk.net/dist/0install/template/template-0.3.tgz" size="1045"/>
+  </implementation>
 	</group>
 
 </interface>
