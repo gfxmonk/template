@@ -3,6 +3,7 @@
 <interface uri="http://gfxmonk.net/dist/0install/jinja2.xml" xmlns="http://zero-install.sourceforge.net/2004/injector/interface">
 	<name>jinja2</name>
 	<summary>python templating engine</summary>
+	<publish mode="third-party" xmlns="http://gfxmonk.net/dist/0install"/>
 	<description>
 A standalone python templating engine with a syntax similar to django's
 templates.</description>

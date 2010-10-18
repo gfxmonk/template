@@ -21,6 +21,10 @@ an error and cause the script to fail.
 		<requires interface="http://gfxmonk.net/dist/0install/jinja2.xml">
 			<environment insert="" mode="prepend" name="PYTHONPATH"/>
 		</requires>
+		<requires interface="http://gfxmonk.net/dist/0install/pyyaml.xml">
+			<environment insert="lib" mode="prepend" name="PYTHONPATH"/>
+		</requires>
+
 		<implementation id="sha1new=23c31c4538971a1ba745e51ba01f6098abbb747d" released="2010-10-16" version="0.2">
 		
     <manifest-digest sha256="ea53bf617f6ae3d60802e51c473000acd06a57110e2fecfea2652a771d9c86ef"/>

@@ -2,12 +2,16 @@
 import os, sys
 import jinja2
 
+environ = os.environ
+
 def replace(template_location, output_location='-'):
 	with open_file(template_location) as template:
-		with open_file(output_location, 'w') as output:
-			template = jinja2.Template(template.read())
-			template.environment.undefined = jinja2.StrictUndefined
-			print >> output, template.render(os.environ),
+		template = jinja2.Template(template.read())
+
+	template.environment.undefined = jinja2.StrictUndefined
+
+	with open_file(output_location, 'w') as output:
+		print >> output, template.render(environ),
 
 class open_file(object):
 	def __init__(self, path, mode='r', silent=False):
@@ -43,11 +47,26 @@ class open_file(object):
 
 
 if __name__ == '__main__':
-	if '--help' in sys.argv:
-		print >> sys.stderr, """Usage: template infile [outfile]\n       (use "-" for stdin / stdout)"""
-		sys.exit(1)
-	args = sys.argv[1:] or ('-',)
+	import optparse
+	parser = optparse.OptionParser("""Usage: %prog [OPTIONS] infile [outfile]\n       (use "-" for stdin / stdout)""")
+	parser.add_option("-i", "--in-place", action='store_true', help="replace input file with output, like `sed -i`")
+	parser.add_option("-y", "--yaml", help="use the given yaml file for values, as well as ENV")
+	opts, args = parser.parse_args()
+	args = args or ('-',)
 	try:
+		if opts.in_place:
+			assert len(args) == 1 and args[0] != '-', "you must specify exactly one file for in-place mode"
+			args = (args[0], args[0])
+
+		if opts.yaml:
+			import yaml
+			with open(opts.yaml) as yaml_file:
+				environ = os.environ.copy()
+				environ.update(yaml.load(yaml_file))
+
 		replace(*args)
 	except KeyboardInterrupt: pass
+	except AssertionError, e:
+		print >> sys.stderr, "Error: %s" % (e,)
+		sys.exit(1)
 
