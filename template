@@ -48,9 +48,11 @@ class open_file(object):
 
 if __name__ == '__main__':
 	import optparse
-	parser = optparse.OptionParser("""Usage: %prog [OPTIONS] infile [outfile]\n       (use "-" for stdin / stdout)""")
+	parser = optparse.OptionParser("""Usage: %prog [OPTIONS] infile [outfile]\n       (use "-" for stdin / stdout)\n        """)
 	parser.add_option("-i", "--in-place", action='store_true', help="replace input file with output, like `sed -i`")
-	parser.add_option("-y", "--yaml", help="use the given yaml file for values, as well as ENV")
+	parser.add_option("-y", "--yaml", help="use the given YAML file for values, instead of ENV")
+	parser.add_option("-j", "--json", help="use the given JSON file for values, instead of ENV")
+	parser.add_option("-e", "--env", help="allow ENV to override any JSON / YAML options given", action='store_true')
 	opts, args = parser.parse_args()
 	args = args or ('-',)
 	try:
@@ -58,11 +60,21 @@ if __name__ == '__main__':
 			assert len(args) == 1 and args[0] != '-', "you must specify exactly one file for in-place mode"
 			args = (args[0], args[0])
 
+		assert len([True for opt in (opts.yaml, opts.json) if opt]) <= 1, "Can't specify both YAML / JSON"
+
+		environ = {}
+
 		if opts.yaml:
 			import yaml
 			with open(opts.yaml) as yaml_file:
-				environ = os.environ.copy()
-				environ.update(yaml.load(yaml_file))
+				environ.update(yaml.safe_load(yaml_file))
+		elif opts.json:
+			import json
+			with open(opts.json) as json_file:
+				environ.update(json.load(json_file))
+
+		if opts.env or not (opts.yaml or opts.json):
+			environ.update(os.environ.copy())
 
 		replace(*args)
 	except KeyboardInterrupt: pass
