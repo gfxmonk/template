@@ -1,13 +1,55 @@
 #!/usr/bin/env python
 import os, sys
 import jinja2
+import logging
+LOGGER = logging.getLogger(__name__)
 
-def replace(template_location, output_location='-'):
+class InteractiveMapping(object):
+	def __init__(self, mapping):
+		self.mapping = mapping.copy()
+	
+	def __contains__(self, key):
+		return True
+
+	def __getitem__(self, key):
+		LOGGER.debug("Getting %s" % (key,))
+		try:
+			return self.mapping[key]
+		except KeyError:
+			self.mapping[key] = raw_input("Enter a value for [%s]: " % (key,))
+			return self.mapping[key]
+	
+	def __repr__(self):
+		return "InteractiveMapping(%r)" % (self.mapping,)
+
+def replace(opts, template_location, output_location='-'):
+	if opts.json:
+		try:
+			import json
+		except ImportError:
+			LOGGER.debug("json module not available, trying simplejson...")
+			import simplejson as json
+		LOGGER.debug("Loading JSON from: %r", opts.json)
+		with open(opts.json) as f:
+			mapping = json.load(f)
+	else:
+		mapping = os.environ
+	
+	if opts.interactive:
+		mapping = InteractiveMapping(mapping)
+	LOGGER.debug("Using mapping: %r", mapping)
+
+	LOGGER.debug("Reading template from %s" % (template_location))
 	with open_file(template_location) as template:
-		with open_file(output_location, 'w') as output:
-			template = jinja2.Template(template.read())
-			template.environment.undefined = jinja2.StrictUndefined
-			print >> output, template.render(os.environ),
+		template = jinja2.Template(template.read())
+
+	import pdb; pdb.set_trace()
+	template.environment.undefined = jinja2.StrictUndefined
+	contents = template.render(os.environ)
+
+	LOGGER.debug("Writing to %s", output_location)
+	with open_file(output_location, 'w') as output:
+		output.write(contents)
 
 class open_file(object):
 	def __init__(self, path, mode='r', silent=False):
@@ -43,11 +85,16 @@ class open_file(object):
 
 
 if __name__ == '__main__':
-	if '--help' in sys.argv:
-		print >> sys.stderr, """Usage: template infile [outfile]\n       (use "-" for stdin / stdout)"""
-		sys.exit(1)
-	args = sys.argv[1:] or ('-',)
+	import optparse
+	p = optparse.OptionParser("template infile [outfile] (use \"-\" for stdin / stdout)")
+	p.add_option('-i', '--interactive', action='store_true')
+	p.add_option('-j', '--json', help='use a JSON file for values', dest='json', default=None)
+	p.add_option('-e', '--env', help='use environment for values (default)', action='store_false', dest='json')
+	p.add_option('-v', '--verbose', help='verbose logging', action='store_true')
+	opts, args = p.parse_args()
+	logging.basicConfig(level=logging.DEBUG if opts.verbose else logging.INFO)
+	if not args:
+		args = ('-',)
 	try:
-		replace(*args)
+		replace(opts, *args)
 	except KeyboardInterrupt: pass
-
