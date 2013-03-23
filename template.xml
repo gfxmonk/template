@@ -38,5 +38,9 @@ an error and cause the script to fail.
 			<manifest-digest sha256="40d566426ebe3452afb18077bb19bd77f7d4f5b8d6a22bbeb8a357fcb4e826ba"/>
 			<archive href="http://gfxmonk.net/dist/0install/template/template-0.4.tgz" size="1210"/>
 		</implementation>
+		<implementation id="sha1new=0886a73d2735403d2bef2a4887c255f3e8455906" released="2013-03-23" version="0.5">
+			<manifest-digest sha256new="UQTWNMGOKY2TXVTXSTQ7YYATVCV6HJ52SMCERPADSTXJX3B5AGDA"/>
+			<archive href="http://gfxmonk.net/dist/0install/template/template-0.5.tgz" size="1719"/>
+		</implementation>
 	</group>
 </interface>
