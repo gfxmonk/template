@@ -1,17 +1,43 @@
 #!/usr/bin/env python
 import os, sys
 import jinja2
+import logging
+LOGGER = logging.getLogger(__name__)
 
-environ = os.environ
-
-def replace(template_location, output_location='-'):
-	with open_file(template_location) as template:
-		template = jinja2.Template(template.read())
+def replace(mapping, template_location, output_location='-'):
+	LOGGER.debug("Using mapping: %r", mapping)
+	LOGGER.debug("Reading template from %s" % (template_location))
+	with open_file(template_location) as template_file:
+		template = jinja2.Template(template_file.read())
 
 	template.environment.undefined = jinja2.StrictUndefined
 
+	contents = template.render(mapping)
+
+	LOGGER.debug("Writing to %s", output_location)
 	with open_file(output_location, 'w') as output:
-		print >> output, template.render(environ),
+		output.write(contents)
+
+class InteractiveContext(jinja2.runtime.Context):
+	def __init__(self, *a, **k):
+		self.__responses = {}
+		super(InteractiveContext, self).__init__(*a, **k)
+	
+	def __get(self, key):
+		LOGGER.debug("Prompting for: %s" % (key,))
+		if key not in self.__responses:
+			self.__responses[key] = raw_input("Enter value for %r: " % (key,))
+		return self.__responses[key]
+
+	def resolve(self, key):
+		"""Looks up a variable like `__getitem__` or `get` but returns an
+		:class:`Undefined` object with the name of the name looked up.
+		"""
+		val = super(InteractiveContext, self).resolve(key)
+		if isinstance(val, jinja2.Undefined):
+			return self.__get(key)
+		else:
+			return val
 
 class open_file(object):
 	def __init__(self, path, mode='r', silent=False):
@@ -45,40 +71,57 @@ class open_file(object):
 	def __exit_file(self):
 		self.__context.__exit__()
 
-
-if __name__ == '__main__':
+def main():
 	import optparse
 	parser = optparse.OptionParser("""Usage: %prog [OPTIONS] infile [outfile]\n       (use "-" for stdin / stdout)\n        """)
 	parser.add_option("-i", "--in-place", action='store_true', help="replace input file with output, like `sed -i`")
+	parser.add_option('-p', '--prompt', action='store_true', help="Prompt for missing values interactively")
 	parser.add_option("-y", "--yaml", help="use the given YAML file for values, instead of ENV")
 	parser.add_option("-j", "--json", help="use the given JSON file for values, instead of ENV")
 	parser.add_option("-e", "--env", help="allow ENV to override any JSON / YAML options given", action='store_true')
+	parser.add_option('-v', '--verbose', help='verbose logging', action='store_true')
 	opts, args = parser.parse_args()
+	logging.basicConfig(level=logging.DEBUG if opts.verbose else logging.INFO)
 	args = args or ('-',)
-	try:
-		if opts.in_place:
-			assert len(args) == 1 and args[0] != '-', "you must specify exactly one file for in-place mode"
-			args = (args[0], args[0])
 
-		assert len([True for opt in (opts.yaml, opts.json) if opt]) <= 1, "Can't specify both YAML / JSON"
+	if opts.in_place:
+		assert len(args) == 1 and args[0] != '-', "you must specify exactly one file for in-place mode"
+		args = (args[0], args[0])
 
-		environ = {}
+	assert not(opts.yaml and opts.json), "Can't specify both YAML / JSON"
 
-		if opts.yaml:
-			import yaml
-			with open(opts.yaml) as yaml_file:
-				environ.update(yaml.safe_load(yaml_file))
-		elif opts.json:
+	environ = {}
+
+	if opts.yaml:
+		import yaml
+		LOGGER.debug("Loading YAML from: %r", opts.yaml)
+		with open(opts.yaml) as yaml_file:
+			environ.update(yaml.safe_load(yaml_file))
+	elif opts.json:
+		try:
 			import json
-			with open(opts.json) as json_file:
-				environ.update(json.load(json_file))
+		except ImportError:
+			LOGGER.debug("json module not available, trying simplejson...")
+			import simplejson as json
+		LOGGER.debug("Loading JSON from: %r", opts.json)
+		with open(opts.json) as f:
+			environ.update(json.load(f))
 
-		if opts.env or not (opts.yaml or opts.json):
-			environ.update(os.environ.copy())
+	if opts.env or not (opts.yaml or opts.json):
+		LOGGER.debug("Using ENV")
+		environ.update(os.environ)
 
-		replace(*args)
-	except KeyboardInterrupt: pass
+	if opts.prompt:
+		LOGGER.debug("Prompting for undefined values")
+		jinja2.runtime.Context = InteractiveContext
+
+	replace(environ, *args)
+
+if __name__ == '__main__':
+	try:
+		main()
+	except KeyboardInterrupt:
+		sys.exit(2)
 	except AssertionError, e:
 		print >> sys.stderr, "Error: %s" % (e,)
 		sys.exit(1)
-
