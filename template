@@ -8,7 +8,7 @@ def replace(mapping, template_location, output_location='-'):
 	LOGGER.debug("Using mapping: %r", mapping)
 	LOGGER.debug("Reading template from %s" % (template_location))
 	with open_file(template_location) as template_file:
-		template = jinja2.Template(template_file.read())
+		template = jinja2.Template(template_file.read().decode('utf-8'))
 
 	template.environment.undefined = jinja2.StrictUndefined
 
@@ -16,7 +16,7 @@ def replace(mapping, template_location, output_location='-'):
 
 	LOGGER.debug("Writing to %s", output_location)
 	with open_file(output_location, 'w') as output:
-		output.write(contents)
+		output.write(contents.encode('utf-8'))
 
 class InteractiveContext(jinja2.runtime.Context):
 	def __init__(self, *a, **k):
