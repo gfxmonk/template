@@ -4,5 +4,5 @@ with python3Packages;
 buildPythonPackage {
 	name = "template";
 	src = nix/local.tgz;
-	buildInputs = [jinja2];
+	propagatedBuildInputs = [jinja2];
 }
